@@ -1,0 +1,159 @@
+package main
+
+import (
+	"bytes"
+	"flag"
+	"fmt"
+	"log"
+	"os"
+	"os/exec"
+	"strings"
+
+	"github.com/rickypai/bdiff/changes"
+)
+
+var (
+	debugFlag    = flag.Bool("debug", false, "debug")
+	bazelBinFlag = flag.String("bazel-bin", "bazel", "bazel-bin")
+)
+
+func main() {
+	flag.Parse()
+
+	var bazelBin string
+	if bazelBinFlag != nil {
+		bazelBin = *bazelBinFlag
+	} else {
+		bazelBin = "bazelisk"
+	}
+
+	var debug bool
+	if *debugFlag {
+		debug = true
+	}
+
+	dir, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if debug {
+		fmt.Println(dir)
+	}
+
+	out, stderr, err := execCommand(dir, "git", "diff", "--name-only", "HEAD^1..HEAD")
+	if err != nil {
+		println(out)
+		println(stderr)
+		log.Fatal(err)
+	}
+
+	allFiles := strings.Split(string(out), "\n")
+	srcFiles := make([]string, 0, len(allFiles))
+	delFiles := make([]string, 0, len(allFiles))
+
+	var targets []string
+
+	for _, file := range allFiles {
+		if debug {
+			println(file)
+		}
+
+		if len(file) < 1 {
+			continue
+		}
+
+		if file == "WORKSPACE" {
+			// assume everything changed if WORKSPACE changed
+			targets = []string{"//..."}
+			break
+		}
+
+		// ignore deleted files for now
+		if !fileExists(file) {
+			delFiles = append(delFiles, file)
+			continue
+		}
+
+		buildTargets := changes.BuildFileChanges(file)
+
+		if len(buildTargets) > 0 {
+			targets = append(targets, buildTargets...)
+			continue
+		}
+
+		// check if file is tracked by bazel
+		out, stderr, err = execCommand(dir, bazelBin, "query", file)
+		if err != nil {
+			if strings.Contains(stderr, "no such target") && strings.Contains(stderr, "however, a source file of this name exists.") {
+				// file is not tracked by bazel. skipping
+
+				continue
+			} else {
+				println(out)
+				println(stderr)
+				log.Fatal(err)
+			}
+		}
+
+		srcFiles = append(srcFiles, file)
+	}
+
+	if len(srcFiles) > 0 {
+		rdeps := "rdeps(//..., set(" + strings.Join(srcFiles, " ") + "))"
+		if debug {
+			println(strings.Join([]string{bazelBin, "query", rdeps}, " "))
+		}
+
+		out, stderr, err = execCommand(dir, bazelBin, "query", rdeps)
+		if err != nil {
+			println(out)
+			println(stderr)
+			log.Fatal(err)
+		}
+
+		foundTargets := strings.Split(string(out), "\n")
+
+		for _, foundTarget := range foundTargets {
+			if strings.Contains(foundTarget, "~") {
+				continue
+			}
+
+			targets = append(targets, foundTarget)
+		}
+	}
+
+	// set := "set(" + strings.Join(targets, " ") + ")"
+	// println(strings.Join([]string{bazelBin, "query", set}, " "))
+	// out, stderr, err = execCommand(dir, bazelBin, "query", set)
+	// if err != nil {
+	// 	println(out)
+	// 	println(stderr)
+	// 	log.Fatal(err)
+	// }
+
+	// println(out)
+
+	for _, target := range targets {
+		println(target)
+	}
+}
+
+func fileExists(file string) bool {
+	if _, err := os.Stat(file); err == nil {
+		return true
+	}
+
+	// may actually exist (if error is permission error) but we don't really care
+	return false
+}
+
+func execCommand(dir string, name string, arg ...string) (string, string, error) {
+	cmd := exec.Command(name, arg...)
+	cmd.Dir = dir
+	var out bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	return out.String(), stderr.String(), err
+}

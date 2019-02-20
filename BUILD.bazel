@@ -27,6 +27,7 @@ go_library(
     srcs = ["main.go"],
     importpath = "github.com/rickypai/bdiff",
     visibility = ["//visibility:private"],
+    deps = ["//changes:go_default_library"],
 )
 
 go_binary(
