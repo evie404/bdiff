@@ -1,4 +1,4 @@
-PROJECT := golang-boilerplate
+PROJECT := bdiff
 
 .PHONY: default build buildifier
 
