@@ -40,6 +40,8 @@ func main() {
 		fmt.Println(dir)
 	}
 
+	// TODO: check workspace status and use that if dirty
+	// TODO: git args
 	out, stderr, err := execCommand(dir, "git", "diff", "--name-only", "HEAD^1..HEAD")
 	if err != nil {
 		println(out)
