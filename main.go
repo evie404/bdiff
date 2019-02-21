@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/rickypai/bdiff/bazel"
 	"github.com/rickypai/bdiff/changes"
 	"github.com/rickypai/bdiff/cmd"
 	"github.com/rickypai/bdiff/filesystem"
@@ -105,18 +106,16 @@ func main() {
 			continue
 		}
 
-		// check if file is tracked by bazel
-		out, stderr, err = cmd.ExecCommand(dir, bazelBin, "query", file)
+		// check if file is tracked by Bazel
+		tracked, stderr, err := bazel.FileTracked(dir, bazelBin, file, debug)
 		if err != nil {
-			if strings.Contains(stderr, "no such target") && strings.Contains(stderr, "however, a source file of this name exists.") {
-				// file is not tracked by bazel. skipping
+			println(stderr)
+			log.Fatal(err)
+		}
 
-				continue
-			} else {
-				println(out)
-				println(stderr)
-				log.Fatal(err)
-			}
+		// don't bother with files not tracked by Bazel
+		if !tracked {
+			continue
 		}
 
 		srcFiles = append(srcFiles, file)
@@ -124,18 +123,11 @@ func main() {
 
 	if len(srcFiles) > 0 {
 		rdeps := "rdeps(//..., set(" + strings.Join(srcFiles, " ") + "))"
-		if debug {
-			println(strings.Join([]string{bazelBin, "query", rdeps}, " "))
-		}
-
-		out, stderr, err = cmd.ExecCommand(dir, bazelBin, "query", rdeps)
+		foundTargets, stderr, err := bazel.Query(dir, bazelBin, rdeps, debug)
 		if err != nil {
-			println(out)
 			println(stderr)
 			log.Fatal(err)
 		}
-
-		foundTargets := strings.Split(string(out), "\n")
 
 		for _, foundTarget := range foundTargets {
 			if strings.Contains(foundTarget, "~") {
@@ -154,28 +146,13 @@ func main() {
 		set = "set(" + strings.Join(targets, " ") + ")"
 	}
 
-	if debug {
-		println(strings.Join([]string{bazelBin, "query", set}, " "))
-	}
-	out, stderr, err = cmd.ExecCommand(dir, bazelBin, "query", set)
+	finalTargets, stderr, err := bazel.Query(dir, bazelBin, set, debug)
 	if err != nil {
-		println(out)
 		println(stderr)
 		log.Fatal(err)
 	}
 
-	log.Print(out)
-
-	// for _, target := range targets {
-	// 	log.Print(target)
-	// }
-}
-
-func fileExists(file string) bool {
-	if _, err := os.Stat(file); err == nil {
-		return true
+	for _, target := range finalTargets {
+		fmt.Println(target)
 	}
-
-	// may actually exist (if error is permission error) but we don't really care
-	return false
 }
