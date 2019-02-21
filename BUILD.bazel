@@ -30,6 +30,7 @@ go_library(
     deps = [
         "//changes:go_default_library",
         "//cmd:go_default_library",
+        "//filesystem:go_default_library",
     ],
 )
 

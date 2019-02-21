@@ -9,6 +9,7 @@ import (
 
 	"github.com/rickypai/bdiff/changes"
 	"github.com/rickypai/bdiff/cmd"
+	"github.com/rickypai/bdiff/filesystem"
 )
 
 var (
@@ -92,7 +93,7 @@ func main() {
 		}
 
 		// ignore deleted files for now
-		if !fileExists(file) {
+		if !filesystem.FileExists(file) {
 			delFiles = append(delFiles, file)
 			continue
 		}
