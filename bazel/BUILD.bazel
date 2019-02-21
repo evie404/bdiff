@@ -2,7 +2,10 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "go_default_library",
-    srcs = ["query.go"],
+    srcs = [
+        "query.go",
+        "targets.go",
+    ],
     importpath = "github.com/rickypai/bdiff/bazel",
     visibility = ["//visibility:public"],
     deps = ["//cmd:go_default_library"],

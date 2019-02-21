@@ -130,7 +130,7 @@ func main() {
 		}
 
 		for _, foundTarget := range foundTargets {
-			if strings.Contains(foundTarget, "~") {
+			if bazel.IsInternalTarget(foundTarget) {
 				continue
 			}
 
