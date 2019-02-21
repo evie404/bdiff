@@ -13,8 +13,10 @@ import (
 )
 
 var (
-	debugFlag    = flag.Bool("debug", false, "debug")
-	bazelBinFlag = flag.String("bazel-bin", "bazel", "bazel-bin")
+	debugFlag     = flag.Bool("debug", false, "debug")
+	bazelBinFlag  = flag.String("bazel-bin", "bazel", "bazel-bin")
+	baseRefFlag   = flag.String("base", "", "base ref")
+	targetRefFlag = flag.String("target", "HEAD", "target ref")
 )
 
 func main() {
@@ -32,6 +34,20 @@ func main() {
 		debug = true
 	}
 
+	var baseRef string
+	if baseRefFlag != nil {
+		baseRef = *baseRefFlag
+	} else {
+		baseRef = ""
+	}
+
+	var targetRef string
+	if targetRefFlag != nil {
+		targetRef = *targetRefFlag
+	} else {
+		targetRef = ""
+	}
+
 	dir, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
@@ -42,7 +58,7 @@ func main() {
 
 	// TODO: check workspace status and use that if dirty
 	// TODO: git args
-	out, stderr, err := execCommand(dir, "git", "diff", "--name-only", "HEAD^1..HEAD")
+	out, stderr, err := execCommand(dir, "git", "diff", "--name-only", fmt.Sprintf("%s..%s", baseRef, targetRef))
 	if err != nil {
 		println(out)
 		println(stderr)
