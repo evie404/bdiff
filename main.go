@@ -40,16 +40,17 @@ func main() {
 		log.Fatal(err)
 	}
 
-	outString := string(out)
+	allFiles := strings.Split(string(out), "\n")
 
 	// assume everything changed if WORKSPACE changed
-	if strings.Contains(outString, "\nWORKSPACE\n") || strings.HasPrefix(outString, "WORKSPACE\n") {
-		fmt.Println("//...")
+	for _, file := range allFiles {
+		if file == "WORKSPACE" {
+			fmt.Println("//...")
 
-		return
+			return
+		}
 	}
 
-	allFiles := strings.Split(outString, "\n")
 	srcFiles := make([]string, 0, len(allFiles))
 	delFiles := make([]string, 0, len(allFiles))
 
