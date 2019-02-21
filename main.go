@@ -95,7 +95,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	for _, target := range finalTargets {
+	_, externalTargets := bazel.InternalTargets(finalTargets)
+
+	for _, target := range externalTargets {
 		fmt.Println(target)
 	}
 }
