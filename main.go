@@ -22,38 +22,7 @@ var (
 )
 
 func main() {
-	flag.Parse()
-
-	var bazelBin string
-	if bazelBinFlag != nil {
-		bazelBin = *bazelBinFlag
-	} else {
-		bazelBin = "bazelisk"
-	}
-
-	var debug bool
-	if *debugFlag {
-		debug = true
-	}
-
-	var baseRef string
-	if baseRefFlag != nil {
-		baseRef = *baseRefFlag
-	} else {
-		baseRef = ""
-	}
-
-	var targetRef string
-	if targetRefFlag != nil {
-		targetRef = *targetRefFlag
-	} else {
-		targetRef = ""
-	}
-
-	var testsOnly bool
-	if *testsOnlyFlag {
-		testsOnly = true
-	}
+	bazelBin, baseRef, targetRef, debug, testsOnly := parseFlags()
 
 	dir, err := os.Getwd()
 	if err != nil {
@@ -149,4 +118,36 @@ func main() {
 	for _, target := range finalTargets {
 		fmt.Println(target)
 	}
+}
+
+func parseFlags() (bazelBin, baseRef, targetRef string, debug, testsOnly bool) {
+	flag.Parse()
+
+	if bazelBinFlag != nil {
+		bazelBin = *bazelBinFlag
+	} else {
+		bazelBin = "bazelisk"
+	}
+
+	if *debugFlag {
+		debug = true
+	}
+
+	if baseRefFlag != nil {
+		baseRef = *baseRefFlag
+	} else {
+		baseRef = ""
+	}
+
+	if targetRefFlag != nil {
+		targetRef = *targetRefFlag
+	} else {
+		targetRef = ""
+	}
+
+	if *testsOnlyFlag {
+		testsOnly = true
+	}
+
+	return
 }
