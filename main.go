@@ -17,6 +17,7 @@ var (
 	bazelBinFlag  = flag.String("bazel-bin", "bazel", "bazel-bin")
 	baseRefFlag   = flag.String("base", "", "base ref")
 	targetRefFlag = flag.String("target", "HEAD", "target ref")
+	testsOnlyFlag = flag.Bool("tests-only", false, "debug")
 )
 
 func main() {
@@ -46,6 +47,11 @@ func main() {
 		targetRef = *targetRefFlag
 	} else {
 		targetRef = ""
+	}
+
+	var testsOnly bool
+	if *testsOnlyFlag {
+		testsOnly = true
 	}
 
 	dir, err := os.Getwd()
@@ -140,20 +146,29 @@ func main() {
 		}
 	}
 
-	// set := "set(" + strings.Join(targets, " ") + ")"
-	// println(strings.Join([]string{bazelBin, "query", set}, " "))
-	// out, stderr, err = execCommand(dir, bazelBin, "query", set)
-	// if err != nil {
-	// 	println(out)
-	// 	println(stderr)
-	// 	log.Fatal(err)
-	// }
+	var set string
 
-	// println(out)
-
-	for _, target := range targets {
-		println(target)
+	if testsOnly {
+		set = "tests(set(" + strings.Join(targets, " ") + "))"
+	} else {
+		set = "set(" + strings.Join(targets, " ") + ")"
 	}
+
+	if debug {
+		println(strings.Join([]string{bazelBin, "query", set}, " "))
+	}
+	out, stderr, err = execCommand(dir, bazelBin, "query", set)
+	if err != nil {
+		println(out)
+		println(stderr)
+		log.Fatal(err)
+	}
+
+	log.Print(out)
+
+	// for _, target := range targets {
+	// 	log.Print(target)
+	// }
 }
 
 func fileExists(file string) bool {
