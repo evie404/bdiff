@@ -51,46 +51,26 @@ func main() {
 		}
 	}
 
-	srcFiles := make([]string, 0, len(allFiles))
-	delFiles := make([]string, 0, len(allFiles))
+	// ignore deleted files
+	files, _ := filesystem.FilesExists(allFiles)
+
+	// ignore untracked files
+	trackedFiles, _, stderr, err := bazel.FilesTracked(dir, bazelBin, files, debug)
+	if err != nil {
+		println(stderr)
+		log.Fatal(err)
+	}
+
+	buildFiles, srcFiles := changes.BuildSrcFiles(trackedFiles)
 
 	var targets []string
 
-	for _, file := range allFiles {
-		if debug {
-			println(file)
-		}
-
-		if len(file) < 1 {
-			continue
-		}
-
-		// ignore deleted files for now
-		if !filesystem.FileExists(file) {
-			delFiles = append(delFiles, file)
-			continue
-		}
-
+	for _, file := range buildFiles {
 		buildTargets := changes.BuildFileChanges(file)
 
 		if len(buildTargets) > 0 {
 			targets = append(targets, buildTargets...)
-			continue
 		}
-
-		// check if file is tracked by Bazel
-		tracked, stderr, err := bazel.FileTracked(dir, bazelBin, file, debug)
-		if err != nil {
-			println(stderr)
-			log.Fatal(err)
-		}
-
-		// don't bother with files not tracked by Bazel
-		if !tracked {
-			continue
-		}
-
-		srcFiles = append(srcFiles, file)
 	}
 
 	srcTargets, stderr, err := bazel.TargetsFromSrcs(dir, bazelBin, srcFiles, debug)

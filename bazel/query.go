@@ -36,3 +36,23 @@ func FileTracked(dir, bazelBin, file string, debug bool) (tracked bool, stderr s
 
 	return false, "", nil
 }
+
+func FilesTracked(dir, bazelBin string, files []string, debug bool) (tracked, notTracked []string, stderr string, err error) {
+	tracked = make([]string, 0, len(files))
+	notTracked = make([]string, 0, len(files))
+
+	for _, file := range files {
+		isTracked, stderr, err := FileTracked(dir, bazelBin, file, debug)
+		if err != nil {
+			return nil, nil, stderr, err
+		}
+
+		if isTracked {
+			tracked = append(tracked, file)
+		} else {
+			notTracked = append(notTracked, file)
+		}
+	}
+
+	return
+}

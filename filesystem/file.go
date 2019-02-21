@@ -10,3 +10,18 @@ func FileExists(file string) bool {
 	// may actually exist (if error is permission error) but we don't really care
 	return false
 }
+
+func FilesExists(files []string) (exist, notExist []string) {
+	exist = make([]string, 0, len(files))
+	notExist = make([]string, 0, len(files))
+
+	for _, file := range files {
+		if FileExists(file) {
+			exist = append(exist, file)
+		} else {
+			notExist = append(notExist, file)
+		}
+	}
+
+	return
+}
