@@ -121,22 +121,13 @@ func main() {
 		srcFiles = append(srcFiles, file)
 	}
 
-	if len(srcFiles) > 0 {
-		rdeps := "rdeps(//..., set(" + strings.Join(srcFiles, " ") + "))"
-		foundTargets, stderr, err := bazel.Query(dir, bazelBin, rdeps, debug)
-		if err != nil {
-			println(stderr)
-			log.Fatal(err)
-		}
-
-		for _, foundTarget := range foundTargets {
-			if bazel.IsInternalTarget(foundTarget) {
-				continue
-			}
-
-			targets = append(targets, foundTarget)
-		}
+	srcTargets, stderr, err := bazel.TargetsFromSrcs(dir, bazelBin, srcFiles, debug)
+	if err != nil {
+		println(stderr)
+		log.Fatal(err)
 	}
+
+	targets = append(targets, srcTargets...)
 
 	var set string
 
