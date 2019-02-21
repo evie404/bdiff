@@ -13,6 +13,7 @@ func BuildFileChanges(file string) []string {
 
 	parts := strings.Split(file, "/")
 
+	// TODO: rdeps(:all)
 	if len(parts) <= 1 {
 		return []string{"//..."}
 	}
