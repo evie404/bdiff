@@ -33,7 +33,6 @@ func main() {
 	}
 
 	// TODO: check workspace status and use that if dirty
-	// TODO: git args
 	out, stderr, err := cmd.ExecCommand(dir, "git", "diff", "--name-only", fmt.Sprintf("%s..%s", baseRef, targetRef))
 	if err != nil {
 		println(out)
