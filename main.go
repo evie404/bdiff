@@ -1,15 +1,14 @@
 package main
 
 import (
-	"bytes"
 	"flag"
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"strings"
 
 	"github.com/rickypai/bdiff/changes"
+	"github.com/rickypai/bdiff/cmd"
 )
 
 var (
@@ -64,7 +63,7 @@ func main() {
 
 	// TODO: check workspace status and use that if dirty
 	// TODO: git args
-	out, stderr, err := execCommand(dir, "git", "diff", "--name-only", fmt.Sprintf("%s..%s", baseRef, targetRef))
+	out, stderr, err := cmd.ExecCommand(dir, "git", "diff", "--name-only", fmt.Sprintf("%s..%s", baseRef, targetRef))
 	if err != nil {
 		println(out)
 		println(stderr)
@@ -106,7 +105,7 @@ func main() {
 		}
 
 		// check if file is tracked by bazel
-		out, stderr, err = execCommand(dir, bazelBin, "query", file)
+		out, stderr, err = cmd.ExecCommand(dir, bazelBin, "query", file)
 		if err != nil {
 			if strings.Contains(stderr, "no such target") && strings.Contains(stderr, "however, a source file of this name exists.") {
 				// file is not tracked by bazel. skipping
@@ -128,7 +127,7 @@ func main() {
 			println(strings.Join([]string{bazelBin, "query", rdeps}, " "))
 		}
 
-		out, stderr, err = execCommand(dir, bazelBin, "query", rdeps)
+		out, stderr, err = cmd.ExecCommand(dir, bazelBin, "query", rdeps)
 		if err != nil {
 			println(out)
 			println(stderr)
@@ -157,7 +156,7 @@ func main() {
 	if debug {
 		println(strings.Join([]string{bazelBin, "query", set}, " "))
 	}
-	out, stderr, err = execCommand(dir, bazelBin, "query", set)
+	out, stderr, err = cmd.ExecCommand(dir, bazelBin, "query", set)
 	if err != nil {
 		println(out)
 		println(stderr)
@@ -178,15 +177,4 @@ func fileExists(file string) bool {
 
 	// may actually exist (if error is permission error) but we don't really care
 	return false
-}
-
-func execCommand(dir string, name string, arg ...string) (string, string, error) {
-	cmd := exec.Command(name, arg...)
-	cmd.Dir = dir
-	var out bytes.Buffer
-	var stderr bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stderr = &stderr
-	err := cmd.Run()
-	return out.String(), stderr.String(), err
 }
