@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "dir.go",
+        "file.go",
+    ],
+    importpath = "github.com/rickypai/bdiff/filesystem",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = [
+        "dir_test.go",
+        "file_test.go",
+    ],
+    data = ["testdata/testfile"],
+    embed = [":go_default_library"],
+)
